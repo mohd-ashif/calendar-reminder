@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/user.model';
-
-// Extend express request to include user
 declare global {
     namespace Express {
         interface Request {
@@ -11,7 +9,6 @@ declare global {
 }
 
 export const protect = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
-    // Step 1: Extract Bearer token from Authorization header
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -32,9 +29,6 @@ export const protect = async (req: Request, res: Response, next: NextFunction): 
     }
 
     try {
-        // Step 2: Find user by their stored access token
-        // NOTE: Google tokens rotate on refresh. If token is expired,
-        // the user must re-login to get a fresh token.
         const user = await User.findOne({
             accessToken: token,
             accountStatus: 'active'
