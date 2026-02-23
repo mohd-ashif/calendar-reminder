@@ -1,47 +1,47 @@
-import { google } from 'googleapis';
-import { oauth2Client } from '../config/google';
-import { updateTokens } from '../repositories/user.repo';
-import { IUser } from '../models/user.model';
-import { logger } from '../utils/logger';
-import { GoogleCalendarEvent } from '../types/google';
+    import { google } from 'googleapis';
+    import { oauth2Client } from '../config/google';
+    import { updateTokens } from '../repositories/user.repo';
+    import { IUser } from '../models/user.model';
+    import { logger } from '../utils/logger';
+    import { GoogleCalendarEvent } from '../types/google';
 
 
-export const ensureValidTokens = async (user: IUser): Promise<boolean> => {
-    const isExpired = user.tokenExpiry.getTime() <= (Date.now() + 30000);
+    export const ensureValidTokens = async (user: IUser): Promise<boolean> => {
+        const isExpired = user.tokenExpiry.getTime() <= (Date.now() + 30000);
 
-    if (!isExpired) return true;
+        if (!isExpired) return true;
 
-    if (!user.refreshToken) {
-        logger.warn(`User ${user.email} session expired and no refresh token available.`);
-        user.accountStatus = 'revoked';
-        await user.save();
-        return false;
-    }
-
-    try {
-        logger.info(`Refreshing access token for user: ${user.email}`);
-        oauth2Client.setCredentials({
-            refresh_token: user.refreshToken
-        });
-
-        const { credentials } = await oauth2Client.refreshAccessToken();
-
-        if (credentials && credentials.access_token && credentials.expiry_date) {
-            await updateTokens(user._id!.toString(), credentials.access_token, credentials.expiry_date);
-
-            user.accessToken = credentials.access_token;
-            user.tokenExpiry = new Date(credentials.expiry_date);
-            return true;
+        if (!user.refreshToken) {
+            logger.warn(`User ${user.email} session expired and no refresh token available.`);
+            user.accountStatus = 'revoked'; 
+            await user.save();
+            return false;
         }
 
-        return false;
-    } catch (error: any) {
-        logger.error(`Failed to refresh tokens for user ${user.email}: ${error.message}`);
-        user.accountStatus = 'revoked';
-        await user.save();
-        return false;
-    }
-};
+        try {
+            logger.info(`Refreshing access token for user: ${user.email}`);
+            oauth2Client.setCredentials({
+                refresh_token: user.refreshToken
+            });
+
+            const { credentials } = await oauth2Client.refreshAccessToken();
+
+            if (credentials && credentials.access_token && credentials.expiry_date) {
+                await updateTokens(user._id!.toString(), credentials.access_token, credentials.expiry_date);
+
+                user.accessToken = credentials.access_token;
+                user.tokenExpiry = new Date(credentials.expiry_date);
+                return true;
+            }
+
+            return false;
+        } catch (error: any) {
+            logger.error(`Failed to refresh tokens for user ${user.email}: ${error.message}`);
+            user.accountStatus = 'revoked';
+            await user.save();
+            return false;
+        }
+    };
 
 export const fetchUpcomingEvents = async (user: IUser, timeMin: string, timeMax: string): Promise<GoogleCalendarEvent[]> => {
     try {

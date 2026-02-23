@@ -5,15 +5,15 @@ import { google } from 'googleapis';
 
 export const getAuthUrl = (): string => {
     return oauth2Client.generateAuthUrl({
-        access_type: 'offline', // needed for refresh token
-        prompt: 'consent',      // force consent to ensure refresh token is returned
+        access_type: 'offline', 
+        prompt: 'consent',      
         scope: GOOGLE_SCOPES,
     });
 };
 
 export const handleCallback = async (code: string) => {
     try {
-        const { tokens } = await oauth2Client.getToken(code);
+        const { tokens } = await oauth2Client.getToken(code); 
         oauth2Client.setCredentials(tokens);
 
         const oauth2 = google.oauth2({ version: 'v2', auth: oauth2Client });
